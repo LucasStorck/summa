@@ -1,0 +1,25 @@
+{
+  "name": "summa",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "test": "tsc && node --test \"dist/**/*.test.js\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "rss-parser": "^3.13.0"
+  }
+}
