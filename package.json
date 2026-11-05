@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
+    "migrate": "node dist/db/migrate.js",
     "build": "tsc",
     "type-check": "tsc --noEmit",
     "test": "tsc && node --test \"dist/**/*.test.js\""

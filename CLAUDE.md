@@ -64,6 +64,7 @@ Um módulo importa só de `db/`, `shared/` e, no máximo, da etapa anterior.
 ```
 npm run build       # tsc: src/ -> dist/
 npm start           # node dist/index.js
+npm run migrate     # aplica migrations pendentes (rodar da raiz do projeto; cria app.db)
 npm run type-check  # tsc --noEmit
 npm test            # compila e roda os testes (node:test) em dist/**/*.test.js
 ```
@@ -75,7 +76,16 @@ Testes: runner nativo do Node (`node:test` + `node:assert/strict`), arquivos `*.
 - Commits em **Conventional Commits**: `tipo(escopo opcional): descrição`. Tipos: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`, `build`, `perf`, `style`. Escopo = nome do módulo (`ingestion`, `db`, `normalization`...). Tipo em inglês, descrição em português, no imperativo e em minúsculas (ex.: `feat(ingestion): busca e interpreta feed RSS`). Mudança incompatível: `!` depois do tipo e rodapé `BREAKING CHANGE:`.
 - Um commit por mudança lógica; não misturar `feat` com `docs` ou `ci` no mesmo commit.
 - Branch principal: `main`. Trabalho novo em branch (`feat/...`, `fix/...`) e entra por pull request.
-- CI (`.github/workflows/ci.yml`): em todo PR para `main` e todo push em `main`, roda `npm ci --ignore-scripts` e `npm test` no Node da `.nvmrc`. O merge só fica bloqueado pelo CI se a regra de proteção da `main` exigir o check `test` (configuração no GitHub).
+- CI (`.github/workflows/ci.yml`): em todo PR para `main` e todo push em `main`, roda `npm ci --ignore-scripts` e `npm test` no Node da `.nvmrc`. Ruleset da `main` ativo no GitHub: exige PR, exige o check `test` (nome do job, não do workflow; renomear o job trava os PRs), bloqueia force push e exclusão. Push direto na `main` é recusado.
+
+## Banco de dados
+
+- SQL puro com `better-sqlite3`. `src/db/connection.ts` abre `app.db` (relativo à pasta atual), liga WAL e `foreign_keys = ON` (o SQLite deixa chaves estrangeiras desligadas por padrão).
+- Migrations em `src/db/migrations/NNN_nome.ts`, cada uma exporta `up(db)`. São `.ts`, não `.sql`, porque o `tsc` só copia para `dist/` o que compila.
+- `src/db/migrate.ts` aplica, em ordem e numa transação, as migrations que ainda não estão na tabela `_migrations`.
+- **Nunca editar uma migration já aplicada**; mudança de esquema = nova migration (`002_...`).
+- Artigos e fontes não são apagados: sem `ON DELETE CASCADE`; fonte abandonada vira `active = 0`.
+- `UNIQUE` só onde o valor identifica uma coisa só: `articles.canonical_url`, `sources.url`. `hash` (texto de agência se repete entre veículos) e `guid` (opcional no RSS) não são únicos.
 
 ## Fases (seção 9)
 
@@ -99,7 +109,7 @@ Feito:
 
 Próximos passos da fase 0 (ordem combinada):
 1. [x] Buscar um feed (BBC News Brasil) com `rss-parser` e imprimir os itens, para ver o formato real dos dados
-2. [ ] Criar só as tabelas `sources`, `fetch_runs` e `articles` (o esquema completo fica para a fase 1)
+2. [x] Criar só as tabelas `sources`, `fetch_runs` e `articles` (migration `001_initial`; o esquema completo fica para a fase 1)
 3. [ ] Gravar artigos com deduplicação por URL canônica e registrar cada coleta em `fetch_runs`
 4. [ ] Rodar por uma semana e medir cobertura e frescor de cada fonte
 
@@ -114,7 +124,9 @@ Próximos passos da fase 0 (ordem combinada):
 - Usar `isoDate` (já em UTC, formato ISO) para `published_at`.
 
 Pendências pequenas:
-- `src/config.ts` existe mas está vazio
+- `src/config.ts` existe mas está vazio; o caminho do banco (`app.db`) deve vir dele
+- `verbose: console.log` no `connection.ts` imprime todo SQL; tirar antes da coleta agendada
+- Embeddings: criar em migration própria, com `embedding_model` junto do vetor (seção 6)
 - `declaration`/`declarationMap` ainda ligados no `tsconfig.json` (opcional remover; servem só para bibliotecas)
 - Ainda não há testes; o primeiro bom candidato é a função de URL canônica (passo 3), que é pura
 
