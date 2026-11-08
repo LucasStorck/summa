@@ -9,6 +9,13 @@ test("removes tracking parameters and prefixes from URL", () => {
     );
 });
 
+test("removes DW feed tracking parameter", () => {
+    assert.strictEqual(
+    canonicalizeUrl("https://www.dw.com/pt-br/materia/a-79870019?maca=bra-rss-br-all-1030-xml-mrss"),
+    "https://www.dw.com/pt-br/materia/a-79870019",
+    );
+});
+
 test("throws error for invalid URL", () => {
     assert.throws(() => canonicalizeUrl("not a url"), TypeError);
 });
