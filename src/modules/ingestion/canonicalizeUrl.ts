@@ -1,7 +1,7 @@
 import { URL } from "url";
 
 const TRACKING_PREFIXES = ['utm_'];
-const TRACKING_PARAMS = new Set(["at_medium", "at_campaign", "fbclid", "gclid", "msclkid"]);
+const TRACKING_PARAMS = new Set(["at_medium", "at_campaign", "fbclid", "gclid", "msclkid", "maca"]);
 
 export function canonicalizeUrl(urlString: string): string {
     const url = new URL(urlString);

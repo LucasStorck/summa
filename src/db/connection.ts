@@ -5,7 +5,6 @@ let db: Database.Database;
 try{
     db = new Database('app.db', { 
         timeout: 5000,
-        verbose: console.log 
     });
 
     db.pragma('journal_mode = WAL');

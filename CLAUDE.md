@@ -105,12 +105,13 @@ Fontes iniciais com feed ativo: G1 (por seção), BBC News Brasil, DW. Demais fo
 Feito:
 - [x] Projeto Node + TypeScript configurado e compilando
 - [x] `.gitignore`
-- [x] `src/modules/ingestion/feed.ts`: `fetchFeed(url)` com `fetch` + `rss-parser`; `src/index.ts` imprime o primeiro item da BBC
+- [x] `src/modules/ingestion/feed.ts`: `fetchFeed(url)` com `fetch` + `rss-parser`
+- [x] `src/modules/ingestion/collect.ts`: `collectAllSources(db)` grava os artigos de todas as fontes ativas; `npm start` executa uma coleta e encerra (ainda sem agendador)
 
 Próximos passos da fase 0 (ordem combinada):
 1. [x] Buscar um feed (BBC News Brasil) com `rss-parser` e imprimir os itens, para ver o formato real dos dados
 2. [x] Criar só as tabelas `sources`, `fetch_runs` e `articles` (migration `001_initial`; o esquema completo fica para a fase 1)
-3. [ ] Gravar artigos com deduplicação por URL canônica e registrar cada coleta em `fetch_runs`
+3. [x] Gravar artigos com deduplicação por URL canônica e registrar cada coleta em `fetch_runs`
 4. [ ] Rodar por uma semana e medir cobertura e frescor de cada fonte
 
 ### O que o feed da BBC mostrou (05/11/2026)
@@ -123,11 +124,20 @@ Próximos passos da fase 0 (ordem combinada):
 - Sem `ETag`/`Last-Modified` na resposta → requisição condicional não funciona para essa fonte.
 - Usar `isoDate` (já em UTC, formato ISO) para `published_at`.
 
+### O que a primeira coleta real mostrou (08/11/2026)
+
+- Itens por leitura: BBC 36, DW 65, G1 Economia 100, G1 Política 100.
+- DW: `link` traz `?maca=...`, o mesmo valor em todos os itens (identifica o feed, não a matéria); a página abre sem ele → entra na lista de rastreio. `guid` é só o número do artigo.
+- G1: 17 dos 100 itens de Política já tinham vindo em Economia. A URL única guarda só a primeira fonte (`source_id`), então `item_new_count` depende da ordem de coleta; para medir cobertura, usar `item_found_count`.
+- Nenhum item veio com autor; todos vieram com descrição e data.
+- `hash` = SHA-256 de título + descrição normalizados (a proposta cita "título" e "conteúdo"; esta é a definição adotada).
+- `published_at` (`2026-11-08T12:00:00.000Z`) e `collected_at` (`2026-11-08 12:00:00`) têm formatos diferentes: comparar com `julianday()`, nunca como texto.
+
 Pendências pequenas:
 - `src/config.ts` existe mas está vazio; o caminho do banco (`app.db`) deve vir dele
-- `verbose: console.log` no `connection.ts` imprime todo SQL; tirar antes da coleta agendada
 - Embeddings: criar em migration própria, com `embedding_model` junto do vetor (seção 6)
 - `declaration`/`declarationMap` ainda ligados no `tsconfig.json` (opcional remover; servem só para bibliotecas)
-- Ainda não há testes; o primeiro bom candidato é a função de URL canônica (passo 3), que é pura
+- `repository.ts` e `collect.ts` ainda sem testes no projeto (só `canonicalizeUrl` tem)
+- `fetch_runs.http_status_code` ainda não é preenchido
 
 > Atualize esta seção sempre que um passo for concluído.
